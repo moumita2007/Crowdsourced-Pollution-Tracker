@@ -1,0 +1,64 @@
+let map;
+let markers = [];
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.730610, lng: -73.935242 },  // Default location (New York)
+        zoom: 12
+    });
+    
+    // Load pollution data from the backend
+    fetch('/pollutionData')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(item => {
+                addMarker(item);
+            });
+        });
+}
+
+function addMarker(data) {
+    const marker = new google.maps.Marker({
+        position: { lat: data.latitude, lng: data.longitude },
+        map: map,
+        title: `${data.type}: Level ${data.level}`
+    });
+    markers.push(marker);
+}
+
+document.getElementById("pollutionForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const pollutionType = document.getElementById("pollutionType").value;
+    const pollutionLevel = document.getElementById("pollutionLevel").value;
+    const location = document.getElementById("location").value;
+
+    // Assume we get latitude and longitude from a geocoding API based on the location
+    const latitude = 40.730610;  // Placeholder latitude
+    const longitude = -73.935242;  // Placeholder longitude
+
+    const newReport = {
+        type: pollutionType,
+        level: pollutionLevel,
+        location: location,
+        latitude: latitude,
+        longitude: longitude
+    };
+
+    // Send data to the server
+    fetch('/submitPollution', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newReport)
+    })
+    .then(response => response.json())
+    .then(data => {
+        addMarker(data);
+        alert('Pollution report submitted successfully!');
+    })
+    .catch(error => {
+        console.error('Error submitting report:', error);
+    });
+});
